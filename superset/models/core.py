@@ -713,6 +713,11 @@ class Database(Model, AuditMixinNullable, ImportExportMixin):  # pylint: disable
             if mutator:
                 df = mutator(df)
 
+            if result_set.db_engine_spec.engine == 'awsathena' and is_feature_enabled("DOWNLOAD_CSV_FROM_S3"):
+                df.output_location = cursor._result_set._query_execution._output_location
+            else:
+                df.output_location = None
+
             return self.post_process_df(df)
 
     def compile_sqla_query(

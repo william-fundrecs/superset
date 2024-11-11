@@ -145,6 +145,8 @@ const SliceHeader: FC<SliceHeaderProps> = ({
   exportPivotCSV,
   exportFullCSV,
   exportFullXLSX,
+  downloadCSVFromS3,
+  //downloadXLSXFromS3,
   slice,
   componentId,
   dashboardId,
@@ -269,8 +271,10 @@ const SliceHeader: FC<SliceHeaderProps> = ({
                 exportCSV={exportCSV}
                 exportPivotCSV={exportPivotCSV}
                 exportFullCSV={exportFullCSV}
+                downloadCSVFromS3={downloadCSVFromS3}
                 exportXLSX={exportXLSX}
                 exportFullXLSX={exportFullXLSX}
+                //downloadXLSXFromS3={downloadXLSXFromS3}
                 supersetCanExplore={supersetCanExplore}
                 supersetCanShare={supersetCanShare}
                 supersetCanCSV={supersetCanCSV}

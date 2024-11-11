@@ -156,6 +156,8 @@ export interface SliceHeaderControlsProps {
   exportFullCSV?: (sliceId: number) => void;
   exportXLSX?: (sliceId: number) => void;
   exportFullXLSX?: (sliceId: number) => void;
+  downloadCSVFromS3?: (sliceId: number) => void;
+  //downloadXLSXFromS3?: (sliceId: number) => void;
   handleToggleFullSize: () => void;
 
   addDangerToast: (message: string) => void;
@@ -652,6 +654,14 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
         });
         break;
       }
+      case MenuKeys.DownloadCSVFromS3:
+        // eslint-disable-next-line no-unused-expressions
+        props.downloadCSVFromS3?.(props.slice.slice_id);
+        break;
+      // case MenuKeys.DownloadXLSXFromS3:
+      //   // eslint-disable-next-line no-unused-expressions
+      //   props.downloadXLSXFromS3?.(props.slice.slice_id);
+      //   break;
       case MenuKeys.CrossFilterScoping: {
         openScopingModal();
         break;
@@ -866,26 +876,31 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
           key={MenuKeys.Download}
           onTitleMouseEnter={() => setOpenKeys(undefined)}
         >
-          <Menu.Item
-            key={MenuKeys.ExportCsv}
-            icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
-          >
-            {t('Export to .CSV')}
-          </Menu.Item>
-          {isPivotTable && (
+          {isFeatureEnabled(FeatureFlag.ShowDefaultCSVOptions) && (
+            <>
             <Menu.Item
-              key={MenuKeys.ExportPivotCsv}
+              key={MenuKeys.ExportCsv}
               icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
             >
-              {t('Export to Pivoted .CSV')}
+              {t('Export to .CSV')}
             </Menu.Item>
+            {isPivotTable && (
+              <Menu.Item
+                key={MenuKeys.ExportPivotCsv}
+                icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
+              >
+                {t('Export to Pivoted .CSV')}
+              </Menu.Item>
+            )}
+            <Menu.Item
+              key={MenuKeys.ExportXlsx}
+              icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
+            >
+              {t('Export to Excel')}
+            </Menu.Item>
+            </>
           )}
-          <Menu.Item
-            key={MenuKeys.ExportXlsx}
-            icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
-          >
-            {t('Export to Excel')}
-          </Menu.Item>
+
 
           {isFeatureEnabled(FeatureFlag.AllowFullCsvExport) &&
             props.supersetCanCSV &&
@@ -912,6 +927,25 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
           >
             {t('Download as image')}
           </Menu.Item>
+
+          {isFeatureEnabled(FeatureFlag.DownloadCSVFromS3) &&
+            props.supersetCanCSV &&
+            isTable && (
+              <>
+                <Menu.Item
+                  key={MenuKeys.DownloadCSVFromS3}
+                  icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
+                >
+                  {t('Download CSV from S3')}
+                </Menu.Item>
+                {/* <Menu.Item
+                  key={MenuKeys.DownloadXLSXFromS3}
+                  icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
+                >
+                  {t('Download XLSX from S3')}
+                </Menu.Item> */}
+              </>
+            )}
         </Menu.SubMenu>
       )}
     </Menu>
