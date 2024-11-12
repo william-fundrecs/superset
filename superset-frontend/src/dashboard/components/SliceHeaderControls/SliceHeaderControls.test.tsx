@@ -48,7 +48,7 @@ const createProps = (viz_type = 'sunburst_v2') =>
     exploreChart: jest.fn(),
     exportCSV: jest.fn(),
     exportFullCSV: jest.fn(),
-    downloadCSVFromS3: JsonEditor.fn(),
+    downloadCSVFromS3: jest.fn(),
     exportXLSX: jest.fn(),
     exportFullXLSX: jest.fn(),
     forceRefresh: jest.fn(),
