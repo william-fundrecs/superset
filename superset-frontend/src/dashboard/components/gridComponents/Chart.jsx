@@ -340,7 +340,6 @@ class Chart extends Component {
   }
 
   downloadCSVFromS3() {
-    console.log('ENTER DOWNLOAD CSV');
     this.exportFromS3('csv');
   }
 
