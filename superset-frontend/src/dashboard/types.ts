@@ -268,4 +268,6 @@ export enum MenuKeys {
   ToggleFullscreen = 'toggle_fullscreen',
   ManageEmbedded = 'manage_embedded',
   ManageEmailReports = 'manage_email_reports',
+  DownloadCSVFromS3 = 'download_csv_from_s3',
+  DownloadXLSXFromS3 = 'download_xlsx_from_s3',
 }

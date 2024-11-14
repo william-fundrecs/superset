@@ -1233,6 +1233,9 @@
               "post_processed",
               "drill_detail"
             ]
+          },
+          "result_location": {
+            "enum": ["superset", "s3"]
           }
         },
         "type": "object"
