@@ -26,4 +26,4 @@ jobs:
 
     - name: Push the Docker image
       run: docker push ${{ secrets.DOCKERHUB_USER }}/superset:${{ env.TIMESTAMP }}
-      
+
