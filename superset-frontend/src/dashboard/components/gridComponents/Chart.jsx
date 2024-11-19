@@ -141,7 +141,7 @@ class Chart extends Component {
     this.downloadCSVFromS3 = this.downloadCSVFromS3.bind(this);
     this.exportXLSX = this.exportXLSX.bind(this);
     this.exportFullXLSX = this.exportFullXLSX.bind(this);
-    //this.downloadXLSXFromS3 = this.downloadXLSXFromS3(this);
+    // this.downloadXLSXFromS3 = this.downloadXLSXFromS3(this);
     this.forceRefresh = this.forceRefresh.bind(this);
     this.resize = debounce(this.resize.bind(this), RESIZE_TIMEOUT);
     this.setDescriptionRef = this.setDescriptionRef.bind(this);
@@ -486,7 +486,7 @@ class Chart extends Component {
           exportXLSX={this.exportXLSX}
           exportFullCSV={this.exportFullCSV}
           downloadCSVFromS3={this.downloadCSVFromS3}
-          //downloadXLSXFromS3={this.downloadXLSXFromS3}
+          // downloadXLSXFromS3={this.downloadXLSXFromS3}
           exportFullXLSX={this.exportFullXLSX}
           updateSliceName={updateSliceName}
           sliceName={sliceName}

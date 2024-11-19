@@ -231,5 +231,5 @@ test('should call exportChart with row_limit props.maxRows when exportCSVFromS3 
     }),
   );
 
-  stubbedExportXLSX.mockRestore();
+  stubbedExportCSV.mockRestore();
 });
