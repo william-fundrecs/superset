@@ -2,7 +2,7 @@ import boto3
 from datetime import datetime
 
 
-def generate_presigned_url(output_location: str):
+def generate_presigned_url(output_location: str) -> str:
     s3_client = boto3.client('s3')
     bucket_name, key = output_location.replace("s3://", "").split("/", 1)
     timestamp = datetime.now().strftime("%Y%m%d__%H%M%S")

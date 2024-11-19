@@ -33,6 +33,7 @@ query_context_processor = QueryContextProcessor(
         slice_=None,
         result_format=ChartDataResultFormat.CSV,
         cache_values={},
+        result_location='superset',
     )
 )
 
