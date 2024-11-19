@@ -918,7 +918,8 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
                   {t('Export to full Excel')}
                 </Menu.Item>
               </>
-          )}
+            )}
+
           <Menu.Item
             key={MenuKeys.DownloadAsImage}
             icon={<Icons.FileImageOutlined css={dropdownIconsStyles} />}
