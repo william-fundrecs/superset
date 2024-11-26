@@ -575,13 +575,13 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
             isTable && (
               <>
                 <Menu.Item
-                  key={MenuKeys.DownloadCSVFromS3}
+                  key={MENU_KEYS.DOWNLOAD_CSV_FROM_S3}
                   icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
                 >
                   {t('Download CSV from S3')}
                 </Menu.Item>
                 {/* <Menu.Item
-                  key={MenuKeys.DownloadXLSXFromS3}
+                  key={MENU_KEYS.DOWNLOAD_XLSX_FROM_S3}
                   icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
                 >
                   {t('Download XLSX from S3')}
