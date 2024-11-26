@@ -611,6 +611,11 @@ class Database(
             if mutator:
                 df = mutator(df)
 
+            if result_set.db_engine_spec.engine == 'awsathena' and is_feature_enabled("DOWNLOAD_CSV_FROM_S3"):
+                df.output_location = cursor._result_set._query_execution._output_location
+            else:
+                df.output_location = None
+
             for col, coltype in df.dtypes.to_dict().items():
                 if coltype == numpy.object_ and needs_conversion(df[col]):
                     df[col] = df[col].apply(utils.json_dumps_w_dates)
