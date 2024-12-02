@@ -121,6 +121,7 @@ from superset.superset_typing import (
 from superset.utils import core as utils
 from superset.utils.backports import StrEnum
 from superset.utils.core import GenericDataType, MediumText
+from superset.common.chart_data import ChartDataResultLocation
 
 config = app.config
 metadata = Model.metadata  # pylint: disable=no-member
@@ -1756,7 +1757,7 @@ class SqlaTable(
 
         return or_(*groups)
 
-    def query(self, query_obj: QueryObjectDict) -> QueryResult:
+    def query(self, query_obj: QueryObjectDict, result_location: ChartDataResultLocation = ChartDataResultLocation.SUPERSET) -> QueryResult:
         qry_start_dttm = datetime.now()
         query_str_ext = self.get_query_str_extended(query_obj)
         sql = query_str_ext.sql
@@ -1790,7 +1791,7 @@ class SqlaTable(
             return df
 
         try:
-            df = self.database.get_df(sql, self.schema, mutator=assign_column_label)
+            df = self.database.get_df(sql, schema=self.schema, mutator=assign_column_label, result_location=result_location)
         except Exception as ex:  # pylint: disable=broad-except
             df = pd.DataFrame()
             status = QueryStatus.FAILED

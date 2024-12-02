@@ -75,6 +75,7 @@ from superset.superset_typing import ResultSetColumnType
 from superset.utils import cache as cache_util, core as utils
 from superset.utils.backports import StrEnum
 from superset.utils.core import get_username
+from superset.common.chart_data import ChartDataResultLocation
 
 config = app.config
 custom_password_store = config["SQLALCHEMY_CUSTOM_PASSWORD_STORE"]
@@ -554,6 +555,7 @@ class Database(
         sql: str,
         schema: str | None = None,
         mutator: Callable[[pd.DataFrame], None] | None = None,
+        result_location: ChartDataResultLocation | None = None,
     ) -> pd.DataFrame:
         sqls = self.db_engine_spec.parse_sql(sql)
         with self.get_sqla_engine_with_context(schema) as engine:
@@ -607,14 +609,15 @@ class Database(
             result_set = SupersetResultSet(
                 data, cursor.description, self.db_engine_spec
             )
+
+            if result_set.db_engine_spec.engine == 'awsathena' and is_feature_enabled("DOWNLOAD_CSV_FROM_S3") and result_location == ChartDataResultLocation.S3:
+                df = pd.DataFrame()
+                df.output_location = cursor._result_set._query_execution._output_location
+                return df
+
             df = result_set.to_pandas_df()
             if mutator:
                 df = mutator(df)
-
-            if result_set.db_engine_spec.engine == 'awsathena' and is_feature_enabled("DOWNLOAD_CSV_FROM_S3"):
-                df.output_location = cursor._result_set._query_execution._output_location
-            else:
-                df.output_location = None
 
             for col, coltype in df.dtypes.to_dict().items():
                 if coltype == numpy.object_ and needs_conversion(df[col]):
