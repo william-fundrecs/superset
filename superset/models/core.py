@@ -73,6 +73,7 @@ from superset.models.helpers import AuditMixinNullable, ImportExportMixin
 from superset.result_set import SupersetResultSet
 from superset.superset_typing import ResultSetColumnType
 from superset.utils import cache as cache_util, core as utils
+from superset.utils.aws import run_query_and_get_s3_url
 from superset.utils.backports import StrEnum
 from superset.utils.core import get_username
 from superset.common.chart_data import ChartDataResultLocation
@@ -580,6 +581,12 @@ class Database(
                     security_manager,
                 )
 
+        if self.db_engine_spec.engine == 'awsathena' and is_feature_enabled("DOWNLOAD_CSV_FROM_S3") and result_location == ChartDataResultLocation.S3:
+                s3_url = run_query_and_get_s3_url(sqls[-1], 'fusion_superset_db')
+                df = pd.DataFrame()
+                df.output_location = s3_url
+                return df
+
         with self.get_raw_connection(schema=schema) as conn:
             cursor = conn.cursor()
             for sql_ in sqls[:-1]:
@@ -609,11 +616,6 @@ class Database(
             result_set = SupersetResultSet(
                 data, cursor.description, self.db_engine_spec
             )
-
-            if result_set.db_engine_spec.engine == 'awsathena' and is_feature_enabled("DOWNLOAD_CSV_FROM_S3") and result_location == ChartDataResultLocation.S3:
-                df = pd.DataFrame()
-                df.output_location = cursor._result_set._query_execution._output_location
-                return df
 
             df = result_set.to_pandas_df()
             if mutator:
