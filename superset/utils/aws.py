@@ -15,7 +15,8 @@ def generate_presigned_url(output_location: str) -> str:
     return presigned_url
 
 def run_query_and_get_s3_url(query, database):
-    athena_client = boto3.client('athena')
+    aws_region = boto3.session.Session().region_name
+    athena_client = boto3.client('athena', region_name=aws_region)
     
     response = athena_client.start_query_execution(
         QueryString=query,
