@@ -1,4 +1,5 @@
 import boto3
+import os
 from datetime import datetime
 
 
@@ -14,13 +15,16 @@ def generate_presigned_url(output_location: str) -> str:
     )
     return presigned_url
 
-def run_query_and_get_s3_url(query, database):
-    athena_client = boto3.client('athena', region_name='eu-west-1')
+def run_query_and_get_s3_url(query):
+    REGION = os.getenv("SUPERSET_REGION")
+    WORKGROUP = os.getenv("SUPERSET_WORKGROUP")
+    DATABASE = os.getenv("SUPERSET_ATHENA_DB")
+    athena_client = boto3.client('athena', region_name=REGION)
     
     response = athena_client.start_query_execution(
         QueryString=query,
-        QueryExecutionContext={'Database': database},
-        WorkGroup='superset-etl',
+        QueryExecutionContext={'Database': DATABASE},
+        WorkGroup=WORKGROUP,
     )
     
     query_execution_id = response['QueryExecutionId']
