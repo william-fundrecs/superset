@@ -497,6 +497,7 @@ class Chart extends React.Component {
           formData={formData}
           width={width}
           height={this.getHeaderHeight()}
+          databaseBackend={datasource.database?.backend}
         />
 
         {/*

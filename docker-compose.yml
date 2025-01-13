@@ -25,6 +25,7 @@ x-superset-volumes: &superset-volumes
   - ./superset:/app/superset
   - ./superset-frontend:/app/superset-frontend
   - superset_home:/app/superset_home
+  - ~/.aws:/root/.aws:ro
   - ./tests:/app/tests
 
 version: "3.7"

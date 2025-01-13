@@ -65,10 +65,8 @@ const MENU_KEYS = {
   EXPLORE_CHART: 'explore_chart',
   EXPORT_CSV: 'export_csv',
   EXPORT_FULL_CSV: 'export_full_csv',
-  DOWNLOAD_CSV_FROM_S3: 'download_csv_from_s3',
   EXPORT_XLSX: 'export_xlsx',
   EXPORT_FULL_XLSX: 'export_full_xlsx',
-  DOWNLOAD_XLSX_FROM_S3: 'download_xlsx_from_s3',
   FORCE_REFRESH: 'force_refresh',
   FULLSCREEN: 'fullscreen',
   TOGGLE_CHART_DESCRIPTION: 'toggle_chart_description',
@@ -142,6 +140,7 @@ export interface SliceHeaderControlsProps {
   isDescriptionExpanded?: boolean;
   formData: QueryFormData;
   exploreUrl: string;
+  databaseBackend: string;
 
   forceRefresh: (sliceId: number, dashboardId: number) => void;
   logExploreChart?: (sliceId: number) => void;
@@ -153,7 +152,7 @@ export interface SliceHeaderControlsProps {
   exportFullXLSX?: (sliceId: number) => void;
   downloadCSVFromS3?: (sliceId: number) => void;
   // downloadXLSXFromS3?: (sliceId: number) => void;
-  handleToggleFullSize: () => void;
+  handleToggleFullSize: () => void; 
 
   addDangerToast: (message: string) => void;
   addSuccessToast: (message: string) => void;
@@ -316,6 +315,11 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
         break;
       case MENU_KEYS.EXPORT_CSV:
         // eslint-disable-next-line no-unused-expressions
+        console.log('Export CSV props.databaseBackend', props.databaseBackend);
+        if (isFeatureEnabled(FeatureFlag.DownloadCSVFromS3) && props.databaseBackend === 'awsathena') {
+          props.downloadCSVFromS3?.(props.slice.slice_id);
+          break;
+        }
         props.exportCSV?.(props.slice.slice_id);
         break;
       case MENU_KEYS.FULLSCREEN:
@@ -323,6 +327,11 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
         break;
       case MENU_KEYS.EXPORT_FULL_CSV:
         // eslint-disable-next-line no-unused-expressions
+        console.log('Export Full CSV props.databaseBackend', props.databaseBackend);
+        if (isFeatureEnabled(FeatureFlag.DownloadCSVFromS3) && props.databaseBackend === 'awsathena') {
+          props.downloadCSVFromS3?.(props.slice.slice_id);
+          break;
+        }
         props.exportFullCSV?.(props.slice.slice_id);
         break;
       case MENU_KEYS.EXPORT_FULL_XLSX:
@@ -353,14 +362,6 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
         });
         break;
       }
-      case MENU_KEYS.DOWNLOAD_CSV_FROM_S3:
-        // eslint-disable-next-line no-unused-expressions
-        props.downloadCSVFromS3?.(props.slice.slice_id);
-        break;
-      // case MENU_KEYS.DOWNLOAD_XLSX_FROM_S3:
-      //   // eslint-disable-next-line no-unused-expressions
-      //   props.downloadXLSXFromS3?.(props.slice.slice_id);
-      //   break;
       case MENU_KEYS.CROSS_FILTER_SCOPING: {
         openScopingModal();
         break;
@@ -527,22 +528,18 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
 
       {props.supersetCanCSV && (
         <Menu.SubMenu title={t('Download')}>
-          {isFeatureEnabled(FeatureFlag.ShowDefaultCSVOptions) && (
-            <>
-              <Menu.Item
-                key={MENU_KEYS.EXPORT_CSV}
-                icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
-              >
-                {t('Export to .CSV')}
-              </Menu.Item>
-              <Menu.Item
-                key={MENU_KEYS.EXPORT_XLSX}
-                icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
-              >
-                {t('Export to Excel')}
-              </Menu.Item>
-            </>
-          )}
+          <Menu.Item
+            key={MENU_KEYS.EXPORT_CSV}
+            icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
+          >
+            {t('Export to .CSV')}
+          </Menu.Item>
+          <Menu.Item
+            key={MENU_KEYS.EXPORT_XLSX}
+            icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
+          >
+            {t('Export to Excel')}
+          </Menu.Item>
 
           {isFeatureEnabled(FeatureFlag.AllowFullCsvExport) &&
             props.supersetCanCSV &&
@@ -569,25 +566,6 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
           >
             {t('Download as image')}
           </Menu.Item>
-
-          {isFeatureEnabled(FeatureFlag.DownloadCSVFromS3) &&
-            props.supersetCanCSV &&
-            isTable && (
-              <>
-                <Menu.Item
-                  key={MENU_KEYS.DOWNLOAD_CSV_FROM_S3}
-                  icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
-                >
-                  {t('Download CSV from S3')}
-                </Menu.Item>
-                {/* <Menu.Item
-                  key={MENU_KEYS.DOWNLOAD_XLSX_FROM_S3}
-                  icon={<Icons.FileOutlined css={dropdownIconsStyles} />}
-                >
-                  {t('Download XLSX from S3')}
-                </Menu.Item> */}
-              </>
-            )}
         </Menu.SubMenu>
       )}
     </Menu>

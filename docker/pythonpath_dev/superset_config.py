@@ -26,6 +26,9 @@ import os
 from celery.schedules import crontab
 from flask_caching.backends.filesystemcache import FileSystemCache
 
+from flask_appbuilder.security.manager import AUTH_OAUTH
+from custom_sso_security_manager import CustomSsoSecurityManager
+
 logger = logging.getLogger()
 
 DATABASE_DIALECT = os.getenv("DATABASE_DIALECT")
@@ -40,6 +43,42 @@ EXAMPLES_PASSWORD = os.getenv("EXAMPLES_PASSWORD")
 EXAMPLES_HOST = os.getenv("EXAMPLES_HOST")
 EXAMPLES_PORT = os.getenv("EXAMPLES_PORT")
 EXAMPLES_DB = os.getenv("EXAMPLES_DB")
+
+#SECRET_KEY = "WkwVp3mwgsa3/hPmdiYzQnZhzI78a6dQsWP3AJ3BCWhpqcQlJDYXXP7i"
+
+# Set the authentication type to OAuth
+AUTH_TYPE = AUTH_OAUTH
+CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
+
+OAUTH_PROVIDERS = [
+    {   'name':'auth0',
+        'token_key':'access_token', # Name of the token in the response of access_token_url
+        'icon':'fa-door-open',   # Icon for the provider
+        'remote_app': {
+            'client_id':'Tn2ONyukCODQIz2oy5370jkmiZOXKdLt',  # Client Id (Identify Superset application)
+            'client_secret':'x0NUJjX7rmMEk2ccdqY8FPmrRBeqKYs9_fMVoN10j8cu1eaBQfpAmnsEXnV3vmj2', # Secret for this Client Id (Identify Superset application)
+            'client_kwargs':{
+                'scope': 'openid profile email'  # Scope for the Authorization
+            },
+            'access_token_method':'POST',    # HTTP Method to call access_token_url
+            'api_base_url':'https://sandbox-fundrecs.eu.auth0.com',
+            'access_token_url':'https://sandbox-fundrecs.eu.auth0.com/oauth/token',
+            'server_metadata_url': 'https://sandbox-fundrecs.eu.auth0.com/.well-known/openid-configuration',
+            'authorize_url':'https://sandbox-fundrecs.eu.auth0.com/authorize',
+            'jwks_url': 'https://sandbox-fundrecs.eu.auth0.com/.well-known/jwks.json',
+        }
+    },
+]
+
+# Will allow user self registration, allowing to create Flask users from Authorized User
+AUTH_USER_REGISTRATION = True
+AUTH_ROLES_SYNC_AT_LOGIN = True
+
+FAB_ADD_SECURITY_API = True
+
+AUTH_USER_REGISTRATION_ROLE = "Public"
+AUTH_ROLES_MAPPING = {}
+AUTH_USER_REGISTRATION_ROLE_JMESPATH = ("contains(['shane@fundrecs.com', 'william@fundrecs.com', 'david_foley@fundrecs.com', 'zohaib@fundrecs.com', 'georgi@fundrecs.com'], email) && 'Admin' || 'Public'")
 
 # The SQLAlchemy connection string.
 SQLALCHEMY_DATABASE_URI = (
@@ -92,7 +131,21 @@ class CeleryConfig:
 
 CELERY_CONFIG = CeleryConfig
 
-FEATURE_FLAGS = {"ALERT_REPORTS": True}
+FEATURE_FLAGS = {
+    "ALERT_REPORTS": True,
+    "EMBEDDED_SUPERSET": True,
+    "CLIENT_CACHE": False,
+    "DRILL_TO_DETAIL": True,
+    "DASHBOARD_CROSS_FILTERS": True,
+    "DASHBOARD_RBAC": True,
+    "ENABLE_TEMPLATE_PROCESSING": True,
+    "VERSIONED_EXPORT": True,
+    "ALLOW_FULL_CSV_EXPORT": False,
+    "DOWNLOAD_CSV_FROM_S3": True,
+    "SHOW_DEFAULT_CSV_OPTIONS": False,
+}
+
+
 ALERT_REPORTS_NOTIFICATION_DRY_RUN = True
 WEBDRIVER_BASEURL = "http://superset:8088/"
 # The base URL for the email report hyperlinks.
