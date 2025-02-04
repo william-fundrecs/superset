@@ -24,7 +24,7 @@ from flask_babel import _
 
 from superset import app
 from superset import feature_flag_manager
-from superset.common.chart_data import ChartDataResultType, ChartDataResultLocation
+from superset.common.chart_data import ChartDataResultType, ChartDataResultFormat, ChartDataResultLocation
 from superset.common.db_query_status import QueryStatus
 from superset.connectors.sqla.models import BaseDatasource
 from superset.exceptions import QueryObjectValidationError
@@ -35,7 +35,7 @@ from superset.utils.core import (
     get_column_name,
     get_time_filter_status,
 )
-from superset.utils.aws import generate_presigned_url
+from superset.utils.aws import generate_presigned_url, transform_csv_to_xlsx
 
 if TYPE_CHECKING:
     from superset.common.query_context import QueryContext
@@ -110,9 +110,13 @@ def _get_full(
     if datasource.database.backend == "awsathena" and "presto" in datasource.database.name.lower() \
     and query_context.result_location == ChartDataResultLocation.S3 and feature_flag_manager.is_feature_enabled("DOWNLOAD_CSV_FROM_S3"):
         logger.info("ATHENA OUTPUT LOCATION %s", payload["output_location"])
+        if query_context.result_format == ChartDataResultFormat.XLSX:
+            xlsx_presigned_output_location = generate_presigned_url(transform_csv_to_xlsx(payload["output_location"]), query_context.result_format)
+            return {
+                "output_location": xlsx_presigned_output_location,
+            }
         # Generate presigned URL for output CSV
-        presigned_output_location = generate_presigned_url(payload["output_location"])
-        logger.info("ATHENA OUTPUT LOCATION PRESIGNED %s", presigned_output_location)
+        presigned_output_location = generate_presigned_url(payload["output_location"], query_context.result_format)
         return {
             "output_location": presigned_output_location,
         }

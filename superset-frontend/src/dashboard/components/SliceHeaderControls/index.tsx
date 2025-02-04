@@ -151,7 +151,7 @@ export interface SliceHeaderControlsProps {
   exportXLSX?: (sliceId: number) => void;
   exportFullXLSX?: (sliceId: number) => void;
   downloadCSVFromS3?: (sliceId: number) => void;
-  // downloadXLSXFromS3?: (sliceId: number) => void;
+  downloadXLSXFromS3?: (sliceId: number) => void;
   handleToggleFullSize: () => void; 
 
   addDangerToast: (message: string) => void;
@@ -336,10 +336,18 @@ const SliceHeaderControls = (props: SliceHeaderControlsPropsWithRouter) => {
         break;
       case MENU_KEYS.EXPORT_FULL_XLSX:
         // eslint-disable-next-line no-unused-expressions
+        if (isFeatureEnabled(FeatureFlag.DownloadCSVFromS3) && props.databaseBackend === 'awsathena') {
+          props.downloadXLSXFromS3?.(props.slice.slice_id);
+          break;
+        }
         props.exportFullXLSX?.(props.slice.slice_id);
         break;
       case MENU_KEYS.EXPORT_XLSX:
         // eslint-disable-next-line no-unused-expressions
+        if (isFeatureEnabled(FeatureFlag.DownloadCSVFromS3) && props.databaseBackend === 'awsathena') {
+          props.downloadXLSXFromS3?.(props.slice.slice_id);
+          break;
+        }
         props.exportXLSX?.(props.slice.slice_id);
         break;
       case MENU_KEYS.DOWNLOAD_AS_IMAGE: {
