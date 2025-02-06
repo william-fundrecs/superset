@@ -8,6 +8,8 @@ import pandas as pd
 import io
 
 from superset.common.chart_data import ChartDataResultFormat
+from botocore.config import Config
+
 
 logger = logging.getLogger()
 s3_client = boto3.client('s3')
@@ -55,16 +57,17 @@ def run_query_and_get_s3_url(query):
         raise Exception(f"Query failed with status: {status}")
 
 def transform_csv_to_xlsx(csv_location: str):
-    
-    lambda_client = boto3.client("lambda", region_name=REGION)
+    config = Config(
+        region_name=REGION,
+        read_timeout=900
+    )
+    lambda_client = boto3.client("lambda", config=config)
 
     lambda_response = lambda_client.invoke(
         FunctionName=os.getenv("SUPERSET_EXCEL_LAMBDA"),
         InvocationType='RequestResponse',
         Payload=bytes(json.dumps({"csv_location": csv_location}), 'utf-8')
     )
-
-    logger.info("LAMBDA RESPONSE Response", lambda_response)
     response_payload = json.loads(lambda_response["Payload"].read().decode("utf-8"))
     return response_payload["xlsx_s3_path"]
     
