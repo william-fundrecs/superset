@@ -56,6 +56,7 @@ from sqlalchemy.types import TypeEngine
 from sqlparse.tokens import CTE
 
 from superset import security_manager, sql_parse
+from superset.common.chart_data import ChartDataResultLocation
 from superset.constants import TimeGrain as TimeGrainConstants
 from superset.databases.utils import make_url_safe
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
@@ -2191,3 +2192,22 @@ class BasicParametersMixin:
         )
         spec.components.schema(cls.__name__, schema=cls.parameters_schema)
         return spec.to_dict()["components"]["schemas"][cls.__name__]
+
+    @classmethod
+    def supports_remote_download(cls, location: ChartDataResultLocation) -> bool:
+        """
+        Return a boolean indicating whether the engine supports remote download.
+
+        :location: The location of the file to download
+        """
+        return False
+
+    @classmethod
+    def get_remote_download_url(cls, query: list[str]) -> str:
+        """
+        Return a URL to download the results of the query instead of processing raw data (Presto supports this).
+
+        :query: The query to be executed
+        :return: The URL for downloadable file location
+        """
+        return None
