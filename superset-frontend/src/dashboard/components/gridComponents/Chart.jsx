@@ -29,7 +29,9 @@ import {
   LOG_ACTIONS_CHANGE_DASHBOARD_FILTER,
   LOG_ACTIONS_EXPLORE_DASHBOARD_CHART,
   LOG_ACTIONS_EXPORT_CSV_DASHBOARD_CHART,
+  LOG_ACTIONS_EXPORT_CSV_FROM_S3,
   LOG_ACTIONS_EXPORT_XLSX_DASHBOARD_CHART,
+  LOG_ACTIONS_EXPORT_XLSX_FROM_S3,
   LOG_ACTIONS_FORCE_REFRESH_CHART,
 } from 'src/logger/LogUtils';
 import { areObjectsEqual } from 'src/reduxUtils';
@@ -136,8 +138,10 @@ class Chart extends Component {
     this.exportCSV = this.exportCSV.bind(this);
     this.exportPivotCSV = this.exportPivotCSV.bind(this);
     this.exportFullCSV = this.exportFullCSV.bind(this);
+    this.downloadCSVFromS3 = this.downloadCSVFromS3.bind(this);
     this.exportXLSX = this.exportXLSX.bind(this);
     this.exportFullXLSX = this.exportFullXLSX.bind(this);
+    this.downloadXLSXFromS3 = this.downloadXLSXFromS3.bind(this);
     this.forceRefresh = this.forceRefresh.bind(this);
     this.resize = debounce(this.resize.bind(this), RESIZE_TIMEOUT);
     this.setDescriptionRef = this.setDescriptionRef.bind(this);
@@ -343,6 +347,14 @@ class Chart extends Component {
     this.exportTable('csv', false, true);
   }
 
+  downloadCSVFromS3() {
+    this.exportFromS3('csv');
+  }
+
+  downloadXLSXFromS3() {
+    this.exportFromS3('xlsx');
+  }
+
   exportXLSX() {
     this.exportTable('xlsx', false);
   }
@@ -366,6 +378,25 @@ class Chart extends Component {
         : this.props.formData,
       resultType: isPivot ? 'post_processed' : 'full',
       resultFormat: format,
+      force: true,
+      ownState: this.props.ownState,
+    });
+  }
+
+  exportFromS3(format) {
+    const logAction =
+      format === 'csv'
+        ? LOG_ACTIONS_EXPORT_CSV_FROM_S3
+        : LOG_ACTIONS_EXPORT_XLSX_FROM_S3;
+    this.props.logEvent(logAction, {
+      slice_id: this.props.slice.slice_id,
+      is_cached: this.props.isCached,
+    });
+    exportChart({
+      formData: { ...this.props.formData, row_limit: this.props.maxRows },
+      resultType: 'full',
+      resultFormat: format,
+      resultLocation: 's3',
       force: true,
       ownState: this.props.ownState,
     });
@@ -460,6 +491,8 @@ class Chart extends Component {
           exportPivotCSV={this.exportPivotCSV}
           exportXLSX={this.exportXLSX}
           exportFullCSV={this.exportFullCSV}
+          downloadCSVFromS3={this.downloadCSVFromS3}
+          downloadXLSXFromS3={this.downloadXLSXFromS3}
           exportFullXLSX={this.exportFullXLSX}
           updateSliceName={updateSliceName}
           sliceName={sliceName}
@@ -477,6 +510,7 @@ class Chart extends Component {
           formData={formData}
           width={width}
           height={this.getHeaderHeight()}
+          databaseBackend={datasource.database?.backend}
         />
 
         {/*

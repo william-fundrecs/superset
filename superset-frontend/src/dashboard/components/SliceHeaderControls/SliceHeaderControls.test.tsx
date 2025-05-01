@@ -101,6 +101,7 @@ const createProps = (viz_type = 'sunburst_v2') =>
     supersetCanShare: true,
     formData: { slice_id: 1, datasource: '58__table', viz_type: 'sunburst_v2' },
     exploreUrl: '/explore',
+    databaseBackend: 'sqlite',
   }) as SliceHeaderControlsProps;
 
 const renderWrapper = (
