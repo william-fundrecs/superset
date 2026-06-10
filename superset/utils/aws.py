@@ -3,13 +3,16 @@ import boto3
 import os
 from datetime import datetime
 import logging
- 
+
+from pyathena import connect
+from pyathena.error import OperationalError
+
 import pandas as pd
 import io
 
 from superset.common.chart_data import ChartDataResultFormat
 from botocore.config import Config
- 
+
 logger = logging.getLogger()
 s3_client = boto3.client('s3')
 REGION = os.getenv("SUPERSET_REGION")
@@ -30,29 +33,21 @@ def generate_presigned_url(output_location: str, output_format: ChartDataResultF
     )
     return presigned_url
 
-def run_query_and_get_s3_url(query):
+def run_query_and_get_s3_url(query: str) -> str:
     WORKGROUP = os.getenv("SUPERSET_WORKGROUP")
     DATABASE = os.getenv("SUPERSET_ATHENA_DB")
-    athena_client = boto3.client('athena', region_name=REGION)
-    
-    response = athena_client.start_query_execution(
-        QueryString=query,
-        QueryExecutionContext={'Database': DATABASE},
-        WorkGroup=WORKGROUP,
-    )
-    
-    query_execution_id = response['QueryExecutionId']
-    
-    while True:
-        query_status = athena_client.get_query_execution(QueryExecutionId=query_execution_id)
-        status = query_status['QueryExecution']['Status']['State']
-        if status in ['SUCCEEDED', 'FAILED', 'CANCELLED']:
-            break
-    
-    if status == 'SUCCEEDED':
-        return query_status['QueryExecution']['ResultConfiguration']['OutputLocation']
-    else:
-        raise Exception(f"Query failed with status: {status}")
+    S3_STAGING_DIR = os.getenv("SUPERSET_S3_STAGING_DIR")
+
+    cursor = connect(
+        s3_staging_dir=S3_STAGING_DIR,
+        region_name=REGION,
+        work_group=WORKGROUP,
+        schema_name=DATABASE,
+    ).cursor()
+
+    cursor.execute(query)
+
+    return cursor.output_location
 
 def transform_csv_to_xlsx(csv_location: str):
      
