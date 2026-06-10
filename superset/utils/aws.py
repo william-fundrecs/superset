@@ -47,6 +47,8 @@ def run_query_and_get_s3_url(query: str) -> str:
 
     cursor.execute(query)
 
+    logger.info(f"Query ID: {cursor.query_id}")
+
     return cursor.output_location
 
 def transform_csv_to_xlsx(csv_location: str):
