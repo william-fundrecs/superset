@@ -20,7 +20,11 @@ from typing import Any
 
 from flask import current_app
 
-from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
+from superset.common.chart_data import (
+    ChartDataResultFormat,
+    ChartDataResultLocation,
+    ChartDataResultType,
+)
 from superset.common.query_context import QueryContext
 from superset.common.query_object import QueryObject
 from superset.common.query_object_factory import QueryObjectFactory
@@ -51,6 +55,7 @@ class QueryContextFactory:  # pylint: disable=too-few-public-methods
         form_data: dict[str, Any] | None = None,
         result_type: ChartDataResultType | None = None,
         result_format: ChartDataResultFormat | None = None,
+        result_location: ChartDataResultLocation | None = None,
         force: bool = False,
         custom_cache_timeout: int | None = None,
     ) -> QueryContext:
@@ -66,6 +71,7 @@ class QueryContextFactory:  # pylint: disable=too-few-public-methods
 
         result_type = result_type or ChartDataResultType.FULL
         result_format = result_format or ChartDataResultFormat.JSON
+        result_location = result_location or ChartDataResultLocation.SUPERSET
 
         # The server pagination var is extracted from form data as the
         # row limit for server pagination is more
@@ -92,6 +98,7 @@ class QueryContextFactory:  # pylint: disable=too-few-public-methods
             "queries": queries,
             "result_type": result_type,
             "result_format": result_format,
+            "result_location": result_location,
         }
         return QueryContext(
             datasource=datasource_model_instance,
@@ -100,6 +107,7 @@ class QueryContextFactory:  # pylint: disable=too-few-public-methods
             form_data=form_data,
             result_type=result_type,
             result_format=result_format,
+            result_location=result_location,
             force=force,
             custom_cache_timeout=custom_cache_timeout,
             cache_values=cache_values,

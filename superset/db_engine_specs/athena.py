@@ -190,3 +190,29 @@ class AthenaEngineSpec(BaseEngineSpec):
             awsathena+rest://athena.{region_name}.amazonaws.com:443/{schema_name}?catalog_name={catalog_name}&s3_staging_dir={s3_staging_dir}
         """
         return sqlalchemy_uri.database
+
+    @classmethod
+    def supports_remote_download(cls, result_location: Any) -> bool:
+        """
+        Return True when the DOWNLOAD_CSV_FROM_S3 feature flag is enabled and the
+        caller requested S3 delivery.
+        """
+        # pylint: disable=import-outside-toplevel
+        from superset.common.chart_data import ChartDataResultLocation
+        from superset import feature_flag_manager
+
+        return (
+            feature_flag_manager.is_feature_enabled("DOWNLOAD_CSV_FROM_S3")
+            and result_location == ChartDataResultLocation.S3
+        )
+
+    @classmethod
+    def get_remote_download_url(cls, sql: str) -> Optional[str]:
+        """
+        Submit *sql* to Athena via the workgroup and return the S3 URI of the
+        output CSV.  Returns None on failure.
+        """
+        # pylint: disable=import-outside-toplevel
+        from superset.utils.aws import run_query_and_get_s3_url
+
+        return run_query_and_get_s3_url(sql)

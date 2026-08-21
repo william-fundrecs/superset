@@ -44,3 +44,8 @@ class ChartDataResultType(StrEnum):
     TIMEGRAINS = "timegrains"
     POST_PROCESSED = "post_processed"
     DRILL_DETAIL = "drill_detail"
+
+
+class ChartDataResultLocation(StrEnum):
+    SUPERSET = "superset"
+    S3 = "s3"

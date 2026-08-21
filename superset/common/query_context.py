@@ -21,7 +21,11 @@ from typing import Any, ClassVar, TYPE_CHECKING
 
 import pandas as pd
 
-from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
+from superset.common.chart_data import (
+    ChartDataResultFormat,
+    ChartDataResultLocation,
+    ChartDataResultType,
+)
 from superset.common.query_context_processor import QueryContextProcessor
 from superset.common.query_object import QueryObject
 from superset.explorables.base import Explorable
@@ -50,6 +54,7 @@ class QueryContext:
     form_data: dict[str, Any] | None
     result_type: ChartDataResultType
     result_format: ChartDataResultFormat
+    result_location: ChartDataResultLocation
     force: bool
     custom_cache_timeout: int | None
 
@@ -68,6 +73,7 @@ class QueryContext:
         form_data: dict[str, Any] | None,
         result_type: ChartDataResultType,
         result_format: ChartDataResultFormat,
+        result_location: ChartDataResultLocation = ChartDataResultLocation.SUPERSET,
         force: bool = False,
         custom_cache_timeout: int | None = None,
         cache_values: dict[str, Any],
@@ -76,6 +82,7 @@ class QueryContext:
         self.slice_ = slice_
         self.result_type = result_type
         self.result_format = result_format
+        self.result_location = result_location
         self.queries = queries
         self.form_data = form_data
         self.force = force

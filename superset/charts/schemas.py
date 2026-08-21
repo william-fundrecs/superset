@@ -26,7 +26,11 @@ from marshmallow import EXCLUDE, fields, post_load, Schema, validate
 from marshmallow.validate import Length, Range
 from marshmallow_union import Union
 
-from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
+from superset.common.chart_data import (
+    ChartDataResultFormat,
+    ChartDataResultLocation,
+    ChartDataResultType,
+)
 from superset.db_engine_specs.base import builtin_time_grains
 from superset.tags.models import TagType
 from superset.utils import pandas_postprocessing, schema as utils
@@ -1421,6 +1425,11 @@ class ChartDataQueryContextSchema(Schema):
 
     result_type = fields.Enum(ChartDataResultType, by_value=True)
     result_format = fields.Enum(ChartDataResultFormat, by_value=True)
+    result_location = fields.Enum(
+        ChartDataResultLocation,
+        by_value=True,
+        load_default=ChartDataResultLocation.SUPERSET,
+    )
 
     form_data = fields.Raw(allow_none=True, required=False)
 

@@ -597,6 +597,24 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
     has_query_id_before_execute = True
 
     @classmethod
+    def supports_remote_download(cls, result_location: Any) -> bool:
+        """
+        Return True when this engine can write query results directly to remote
+        storage (e.g. S3 via Athena workgroups) and the requested result_location
+        matches.  Base implementation always returns False.
+        """
+        return False
+
+    @classmethod
+    def get_remote_download_url(cls, sql: str) -> str | None:
+        """
+        Execute *sql* on the remote engine and return an S3 URI pointing to
+        the output file.  Called only when ``supports_remote_download`` is True.
+        Base implementation returns None.
+        """
+        return None
+
+    @classmethod
     def encrypted_extra_sensitive_field_paths(cls) -> set[str]:
         """
         Returns a set of paths for fields that should be masked in the

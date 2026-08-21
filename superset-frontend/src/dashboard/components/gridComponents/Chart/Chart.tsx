@@ -27,13 +27,14 @@ import {
   RefObject,
 } from 'react';
 import type { ChartCustomization, JsonObject } from '@superset-ui/core';
+import { FeatureFlag, isFeatureEnabled, SupersetClient } from '@superset-ui/core';
 import { styled } from '@apache-superset/core/theme';
 import { t } from '@apache-superset/core/translation';
 import { debounce } from 'lodash';
 import { bindActionCreators } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { exportChart } from 'src/explore/exploreUtils';
+import { exportChart, buildV1ChartDataPayload } from 'src/explore/exploreUtils';
 import ChartContainer from 'src/components/Chart/ChartContainer';
 import LastQueriedLabel from 'src/components/LastQueriedLabel';
 import {
@@ -44,7 +45,9 @@ import {
   LOG_ACTIONS_CHANGE_DASHBOARD_FILTER,
   LOG_ACTIONS_EXPLORE_DASHBOARD_CHART,
   LOG_ACTIONS_EXPORT_CSV_DASHBOARD_CHART,
+  LOG_ACTIONS_EXPORT_CSV_FROM_S3,
   LOG_ACTIONS_EXPORT_XLSX_DASHBOARD_CHART,
+  LOG_ACTIONS_EXPORT_XLSX_FROM_S3,
   LOG_ACTIONS_FORCE_REFRESH_CHART,
 } from 'src/logger/LogUtils';
 import { DEFAULT_CSV_STREAMING_ROW_THRESHOLD } from 'src/constants';
@@ -608,6 +611,77 @@ const Chart = (props: ChartProps) => {
     exportTable('xlsx', true);
   }, [exportTable]);
 
+  /** S3 direct download: submit chart query with result_location='s3', then
+   *  open the returned pre-signed URL in a new tab. */
+  const exportTableFromS3 = useCallback(
+    async (format: 'csv' | 'xlsx', isFullCSV: boolean) => {
+      const exportFormData = isFullCSV
+        ? { ...formData, row_limit: maxRows, result_location: 's3' }
+        : { ...formData, result_location: 's3' };
+      const ownStateForExport =
+        (dataMask[props.id]?.ownState as Record<string, unknown>) || {};
+      try {
+        const payload = await buildV1ChartDataPayload({
+          formData:
+            exportFormData as unknown as import('@superset-ui/core').QueryFormData,
+          resultType: 'full',
+          resultFormat: format,
+          ownState: ownStateForExport,
+        });
+        const { json } = await SupersetClient.post({
+          endpoint: '/api/v1/chart/data',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const downloadUrl = (json as { output_location?: string })
+          ?.output_location;
+        if (downloadUrl) {
+          window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+          boundActionCreators.logEvent(
+            format === 'csv'
+              ? LOG_ACTIONS_EXPORT_CSV_FROM_S3
+              : LOG_ACTIONS_EXPORT_XLSX_FROM_S3,
+            { slice_id: sliceSliceId, is_cached: isCached },
+          );
+        } else {
+          boundActionCreators.addDangerToast(
+            t('S3 download URL not available. Please try again.'),
+          );
+        }
+      } catch (error) {
+        boundActionCreators.addDangerToast(
+          t('Failed to request S3 download. Please try again.'),
+        );
+      }
+    },
+    [
+      formData,
+      maxRows,
+      dataMask,
+      props.id,
+      sliceSliceId,
+      isCached,
+      boundActionCreators.addDangerToast,
+      boundActionCreators.logEvent,
+    ],
+  );
+
+  const exportCSVFromS3 = useCallback(() => {
+    exportTableFromS3('csv', false);
+  }, [exportTableFromS3]);
+
+  const exportFullCSVFromS3 = useCallback(() => {
+    exportTableFromS3('csv', true);
+  }, [exportTableFromS3]);
+
+  const exportXLSXFromS3 = useCallback(() => {
+    exportTableFromS3('xlsx', false);
+  }, [exportTableFromS3]);
+
+  const exportFullXLSXFromS3 = useCallback(() => {
+    exportTableFromS3('xlsx', true);
+  }, [exportTableFromS3]);
+
   const forceRefresh = useCallback(() => {
     boundActionCreators.logEvent(LOG_ACTIONS_FORCE_REFRESH_CHART, {
       slice_id: sliceSliceId,
@@ -670,11 +744,27 @@ const Chart = (props: ChartProps) => {
         annotationQuery={annotationQuery}
         logExploreChart={logExploreChart}
         logEvent={boundActionCreators.logEvent}
-        exportCSV={exportCSV}
+        exportCSV={
+          isFeatureEnabled(FeatureFlag.DownloadCSVFromS3)
+            ? exportCSVFromS3
+            : exportCSV
+        }
         exportPivotCSV={exportPivotCSV}
-        exportXLSX={exportXLSX}
-        exportFullCSV={exportFullCSV}
-        exportFullXLSX={exportFullXLSX}
+        exportXLSX={
+          isFeatureEnabled(FeatureFlag.DownloadCSVFromS3)
+            ? exportXLSXFromS3
+            : exportXLSX
+        }
+        exportFullCSV={
+          isFeatureEnabled(FeatureFlag.DownloadCSVFromS3)
+            ? exportFullCSVFromS3
+            : exportFullCSV
+        }
+        exportFullXLSX={
+          isFeatureEnabled(FeatureFlag.DownloadCSVFromS3)
+            ? exportFullXLSXFromS3
+            : exportFullXLSX
+        }
         updateSliceName={(name: string) =>
           props.updateSliceName(props.id, name)
         }

@@ -158,6 +158,30 @@ def _get_full(
     datasource = _get_datasource(query_context, query_obj)
     result_type = query_obj.result_type or query_context.result_type
     payload = query_context.get_df_payload(query_obj, force_cached=force_cached)
+    # ------------------------------------------------------------------ #
+    # S3 fast path: data is already in S3, generate a pre-signed URL      #
+    # ------------------------------------------------------------------ #
+    output_location = payload.get("output_location")
+    result_location = getattr(query_context, "result_location", None)
+
+    # pylint: disable=import-outside-toplevel
+    from superset.common.chart_data import ChartDataResultLocation
+
+    if output_location and result_location == ChartDataResultLocation.S3:
+        from superset.common.chart_data import ChartDataResultFormat  # pylint: disable=import-outside-toplevel
+        from superset.utils.aws import generate_presigned_url, transform_csv_to_xlsx  # pylint: disable=import-outside-toplevel
+
+        result_format = query_context.result_format
+        # For XLSX, convert the Athena CSV result via Lambda before signing
+        if result_format == ChartDataResultFormat.XLSX:
+            xlsx_location = transform_csv_to_xlsx(output_location)
+            target_location = xlsx_location or output_location
+        else:
+            target_location = output_location
+
+        presigned_url = generate_presigned_url(target_location, result_format)
+        return {"output_location": presigned_url or target_location}
+
     df = payload["df"]
     status = payload["status"]
     if status != QueryStatus.FAILED:

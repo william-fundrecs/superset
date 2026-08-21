@@ -210,6 +210,7 @@ class QueryContextProcessor:
             "from_dttm": query_obj.from_dttm,
             "to_dttm": query_obj.to_dttm,
             "label_map": label_map,
+            "output_location": cache.output_location,
         }
 
     def query_cache_key(self, query_obj: QueryObject, **kwargs: Any) -> str | None:
@@ -239,7 +240,47 @@ class QueryContextProcessor:
         This method delegates to the datasource's get_query_result method,
         which handles query execution, normalization, time offsets, and
         post-processing.
+
+        When result_location == S3 and the engine supports remote download,
+        the query SQL is submitted to the remote engine (e.g. Athena) and an
+        S3 URI is returned inside QueryResult.output_location instead of
+        pulling data into memory.
         """
+        # ------------------------------------------------------------------ #
+        # S3 / remote-download fast path                                      #
+        # ------------------------------------------------------------------ #
+        engine_spec: BaseEngineSpec | None = getattr(
+            self._qc_datasource, "db_engine_spec", None
+        )
+        result_location = getattr(self._query_context, "result_location", None)
+        if (
+            engine_spec is not None
+            and result_location is not None
+            and engine_spec.supports_remote_download(result_location)
+        ):
+            from datetime import timedelta  # pylint: disable=import-outside-toplevel
+
+            try:
+                query_str_ext = self._qc_datasource.get_query_str_extended(
+                    query_object.to_dict()
+                )
+                s3_uri = engine_spec.get_remote_download_url(query_str_ext.sql)
+            except Exception as ex:  # pylint: disable=broad-except
+                logger.exception("Remote download failed, falling back to normal query")
+                s3_uri = None
+
+            if s3_uri:
+                return QueryResult(
+                    df=pd.DataFrame(),
+                    query=query_str_ext.sql,
+                    duration=timedelta(0),
+                    status="success",
+                    output_location=s3_uri,
+                )
+
+        # ------------------------------------------------------------------ #
+        # Normal path                                                          #
+        # ------------------------------------------------------------------ #
         return self._qc_datasource.get_query_result(query_object)
 
     def get_data(
