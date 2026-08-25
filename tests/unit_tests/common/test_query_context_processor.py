@@ -1359,6 +1359,7 @@ def test_get_df_payload_invalidates_cache_missing_applied_filter_columns():
             self.applied_template_filters = []
             self.rejected_filter_columns = []
             self.annotation_data = {}
+            self.output_location = None
             self.set_query_result = MagicMock()
 
     mock_cache = MockCache()
