@@ -31,6 +31,7 @@ jobs:
       with:
         context: .
         file: ./Dockerfile
+        target: lean
         push: true
         tags: ${{ secrets.DOCKERHUB_USER }}/superset:${{ env.TIMESTAMP }}
         no-cache: true

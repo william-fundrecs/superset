@@ -160,9 +160,12 @@ geopy==2.4.1
     # via apache-superset (pyproject.toml)
 google-auth==2.43.0
     # via shillelagh
+gevent==24.2.1
+    # via apache-superset (pyproject.toml)
 greenlet==3.1.1
     # via
     #   apache-superset (pyproject.toml)
+    #   gevent
     #   shillelagh
     #   sqlalchemy
 gunicorn==23.0.0
