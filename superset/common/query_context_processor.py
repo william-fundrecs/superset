@@ -59,6 +59,7 @@ from superset.viz import viz_types
 if TYPE_CHECKING:
     from superset.common.query_context import QueryContext
     from superset.common.query_object import QueryObject
+    from superset.db_engine_specs.base import BaseEngineSpec
 
 logger = logging.getLogger(__name__)
 

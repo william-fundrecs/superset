@@ -21,17 +21,17 @@ Environment variables:
   SUPERSET_REGION         — AWS region (e.g. eu-west-1)
   SUPERSET_WORKGROUP      — Athena workgroup with a pre-configured S3 output location
   SUPERSET_ATHENA_DB      — Athena database (catalog) name
-  SUPERSET_S3_STAGING_DIR — S3 URI for Athena result staging (optional if workgroup has default)
+  SUPERSET_S3_STAGING_DIR — S3 URI for Athena result staging
   SUPERSET_EXCEL_LAMBDA   — Lambda function name for CSV-to-XLSX conversion
 """
 from __future__ import annotations
 
-import json
 import logging
 import os
 from datetime import datetime
 from typing import Optional
 
+from superset.utils.json import dumps, loads
 from superset.common.chart_data import ChartDataResultFormat
 
 logger = logging.getLogger(__name__)
@@ -54,14 +54,17 @@ def _get_s3_client():  # type: ignore[no-untyped-def]
 
 
 def run_query_and_get_s3_url(sql: str) -> Optional[str]:
-    """Submit *sql* to Athena via pyathena and return the S3 URI of the result CSV, or None."""
+    """
+    Submit *sql* to Athena via pyathena and return the S3 URI 
+    of the result CSV, or None.
+    """
     workgroup = os.environ.get("SUPERSET_WORKGROUP")
     database = os.environ.get("SUPERSET_ATHENA_DB")
     staging_dir = os.environ.get("SUPERSET_S3_STAGING_DIR")
 
     if not workgroup or not database:
         logger.error(
-            "SUPERSET_WORKGROUP and SUPERSET_ATHENA_DB must be set for Athena S3 download"
+            "SUPERSET_WORKGROUP and SUPERSET_ATHENA_DB must be set"
         )
         return None
 
@@ -116,7 +119,10 @@ def generate_presigned_url(
 
 
 def transform_csv_to_xlsx(csv_location: str) -> Optional[str]:
-    """Invoke the XLSX Lambda to convert an Athena CSV result to XLSX, returning the new S3 URI."""
+    """
+    Invoke the XLSX Lambda to convert an Athena CSV result to XLSX, 
+    returning the new S3 URI.
+    """
     fn = os.environ.get("SUPERSET_EXCEL_LAMBDA")
     if not fn:
         logger.error("SUPERSET_EXCEL_LAMBDA must be set for XLSX conversion")
@@ -133,9 +139,9 @@ def transform_csv_to_xlsx(csv_location: str) -> Optional[str]:
         response = client.invoke(
             FunctionName=fn,
             InvocationType="RequestResponse",
-            Payload=json.dumps({"csv_location": csv_location}).encode(),
+            Payload=dumps({"csv_location": csv_location}).encode(),
         )
-        payload = json.loads(response["Payload"].read().decode())
+        payload = loads(response["Payload"].read().decode())
         return payload.get("xlsx_s3_path")
     except Exception:  # pylint: disable=broad-except
         logger.exception("XLSX Lambda invocation failed for %s", csv_location)
