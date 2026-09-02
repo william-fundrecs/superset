@@ -626,6 +626,7 @@ const Chart = (props: ChartProps) => {
             exportFormData as unknown as import('@superset-ui/core').QueryFormData,
           resultType: 'full',
           resultFormat: format,
+          force: true,
           ownState: ownStateForExport,
         });
         const { json } = await SupersetClient.post({

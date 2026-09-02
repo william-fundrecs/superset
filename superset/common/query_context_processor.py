@@ -227,6 +227,8 @@ class QueryContextProcessor:
                 extra_cache_keys=extra_cache_keys,
                 rls=security_manager.get_rls_cache_key(datasource),
                 changed_on=datasource.changed_on,
+                # Keep S3 direct-download results out of the normal chart cache
+                result_location=getattr(self._query_context, "result_location", None),
                 **kwargs,
             )
             if query_obj
