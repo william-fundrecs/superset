@@ -504,18 +504,16 @@ class ChartDataRestApi(ChartRestApi):
             is_cached_values = [query.get("is_cached") for query in result["queries"]]
             add_extra_log_payload(is_cached=is_cached_values)
 
-        # S3 redirect: when the first query produced an output_location the data
-        # is already in S3; return a JSON response so the frontend can open the
-        # presigned URL directly (avoids cross-origin redirect issues with postBlob).
+        # S3 redirect: return JSON body for the frontend and a Location header for
+        # report-mediator service
         if (
             result.get("queries")
             and result["queries"][0].get("output_location")
         ):
-            return self.response(
-                200,
-                result=result["queries"][0]["output_location"],
-                output_location=result["queries"][0]["output_location"],
-            )
+            url = result["queries"][0]["output_location"]
+            resp = self.response(200, result=url, output_location=url)
+            resp.headers["Location"] = url
+            return resp
 
         return self._send_chart_response(
             result, form_data, datasource, filename, expected_rows
