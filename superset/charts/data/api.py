@@ -44,7 +44,7 @@ from superset.commands.chart.exceptions import (
     ChartDataCacheLoadError,
     ChartDataQueryFailedError,
 )
-from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
+from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType, ChartDataResultLocation
 from superset.connectors.sqla.models import BaseDatasource
 from superset.constants import CACHE_DISABLED_TIMEOUT
 from superset.daos.exceptions import DatasourceNotFound
@@ -504,16 +504,12 @@ class ChartDataRestApi(ChartRestApi):
             is_cached_values = [query.get("is_cached") for query in result["queries"]]
             add_extra_log_payload(is_cached=is_cached_values)
 
-        # S3 redirect: return JSON body for the frontend and a Location header for
-        # report-mediator service
-        if (
-            result.get("queries")
-            and result["queries"][0].get("output_location")
-        ):
-            url = result["queries"][0]["output_location"]
-            resp = self.response(200, result=url, output_location=url)
-            resp.headers["Location"] = url
-            return resp
+        # Avoid post-processing and simply return presigned URL to query location csv
+        if result["query_context"].result_location == ChartDataResultLocation.S3:
+            if result['queries'][0]['output_location']:
+                resp = make_response('', 302)
+                resp.headers["Location"] = result['queries'][0]['output_location']
+                return resp
 
         return self._send_chart_response(
             result, form_data, datasource, filename, expected_rows
