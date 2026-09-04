@@ -35,6 +35,7 @@ import { bindActionCreators } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { exportChart, buildV1ChartDataPayload } from 'src/explore/exploreUtils';
+import { safeStringify } from 'src/utils/safeStringify';
 import ChartContainer from 'src/components/Chart/ChartContainer';
 import LastQueriedLabel from 'src/components/LastQueriedLabel';
 import {
@@ -611,8 +612,9 @@ const Chart = (props: ChartProps) => {
     exportTable('xlsx', true);
   }, [exportTable]);
 
-  /** S3 direct download: submit chart query with result_location='s3', then
-   *  open the returned pre-signed URL in a new tab. */
+  /** S3 direct download: submit chart query with result_location='s3' via a real
+   *  form navigation (like normal exports), so the browser follows the backend's
+   *  302-to-presigned-URL redirect natively instead of via fetch/JSON. */
   const exportTableFromS3 = useCallback(
     async (format: 'csv' | 'xlsx', isFullCSV: boolean) => {
       const exportFormData = isFullCSV
@@ -629,26 +631,15 @@ const Chart = (props: ChartProps) => {
           force: true,
           ownState: ownStateForExport,
         });
-        const { json } = await SupersetClient.post({
-          endpoint: '/api/v1/chart/data',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+        await SupersetClient.postForm('/api/v1/chart/data', {
+          form_data: safeStringify(payload),
         });
-        const downloadUrl = (json as { output_location?: string })
-          ?.output_location;
-        if (downloadUrl) {
-          window.open(downloadUrl, '_blank', 'noopener,noreferrer');
-          boundActionCreators.logEvent(
-            format === 'csv'
-              ? LOG_ACTIONS_EXPORT_CSV_FROM_S3
-              : LOG_ACTIONS_EXPORT_XLSX_FROM_S3,
-            { slice_id: sliceSliceId, is_cached: isCached },
-          );
-        } else {
-          boundActionCreators.addDangerToast(
-            t('S3 download URL not available. Please try again.'),
-          );
-        }
+        boundActionCreators.logEvent(
+          format === 'csv'
+            ? LOG_ACTIONS_EXPORT_CSV_FROM_S3
+            : LOG_ACTIONS_EXPORT_XLSX_FROM_S3,
+          { slice_id: sliceSliceId, is_cached: isCached },
+        );
       } catch (error) {
         boundActionCreators.addDangerToast(
           t('Failed to request S3 download. Please try again.'),
